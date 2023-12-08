@@ -15,73 +15,58 @@
     };
   };
 
-  outputs =
-    { self
-    , nixpkgs
-    , flake-utils
+  outputs = { self, nixpkgs, flake-utils
 
-    , fenix
-    , crane
-    }: flake-utils.lib.eachDefaultSystem (system:
-    let
-      pkgs = nixpkgs.legacyPackages.${system};
-      stdenv =
-        if pkgs.stdenv.isLinux then
+    , fenix, crane }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+        stdenv = if pkgs.stdenv.isLinux then
           pkgs.stdenvAdapters.useMoldLinker pkgs.stdenv
         else
           pkgs.stdenv;
 
-      mkToolchain = fenix.packages.${system}.combine;
+        mkToolchain = fenix.packages.${system}.combine;
 
-      toolchain = fenix.packages.${system}.stable;
+        toolchain = fenix.packages.${system}.stable;
 
-      buildToolchain = mkToolchain (with toolchain; [
-        cargo
-        rustc
-      ]);
+        buildToolchain = mkToolchain (with toolchain; [ cargo rustc ]);
 
-      devToolchain = mkToolchain (with toolchain; [
-        cargo
-        clippy
-        rust-src
-        rustc
+        devToolchain = mkToolchain (with toolchain; [
+          cargo
+          clippy
+          rust-src
+          rustc
+          # Always use nightly rustfmt because most of its options are unstable
+          fenix.packages.${system}.latest.rustfmt
+        ]);
 
-        # Always use nightly rustfmt because most of its options are unstable
-        fenix.packages.${system}.latest.rustfmt
-      ]);
+        builder =
+          ((crane.mkLib pkgs).overrideToolchain buildToolchain).buildPackage;
+      in {
+        packages.default = builder {
+          src = ./.;
 
-      builder =
-        ((crane.mkLib pkgs).overrideToolchain buildToolchain).buildPackage;
-    in
-    {
-      packages.default = builder {
-        src = ./.;
-
-        inherit stdenv;
-      };
-
-      devShells.default = (pkgs.mkShell.override { inherit stdenv; }) {
-        env = {
-          # Rust Analyzer needs to be able to find the path to default crate
-          # sources, and it can read this environment variable to do so. The
-          # `rust-src` component is required in order for this to work.
-          RUST_SRC_PATH = "${devToolchain}/lib/rustlib/src/rust/library";
+          inherit stdenv;
         };
 
-        # Development tools
-        nativeBuildInputs = [
-          devToolchain
-        ] ++ (with pkgs; [
-          engage
-          nixpkgs-fmt
-        ]) ++ (with pkgs.nodePackages; [
-          markdownlint-cli
-        ]);
-      };
+        devShells.default = (pkgs.mkShell.override { inherit stdenv; }) {
+          env = {
+            # Rust Analyzer needs to be able to find the path to default crate
+            # sources, and it can read this environment variable to do so. The
+            # `rust-src` component is required in order for this to work.
+            RUST_SRC_PATH = "${devToolchain}/lib/rustlib/src/rust/library";
+          };
 
-      checks = {
-        packagesDefault = self.packages.${system}.default;
-        devShellsDefault = self.devShells.${system}.default;
-      };
-    });
+          # Development tools
+          nativeBuildInputs = [ devToolchain ]
+            ++ (with pkgs; [ engage nixpkgs-fmt pkg-config openssl ])
+            ++ (with pkgs.nodePackages; [ markdownlint-cli ]);
+        };
+
+        checks = {
+          packagesDefault = self.packages.${system}.default;
+          devShellsDefault = self.devShells.${system}.default;
+        };
+      });
 }
