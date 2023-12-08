@@ -1,34 +1,23 @@
 //! This module contains the struct for a team and its implementation.
-use super::{ItemResult, League};
+use super::ItemResult;
 
-/// This struct represents a league.
-pub struct Team<'a> {
+/// This struct represents a team.
+pub struct Team {
     name: String,
     id: String,
-    league: Option<&'a League>,
 }
 
-impl<'a> Team<'a> {
+impl Team {
     /// Constructor for Team.
-    pub fn new(
-        name: String,
-        id: String,
-        league: Option<&'a League>,
-    ) -> Team<'a> {
+    pub fn new(name: String, id: String) -> Team {
         Team {
             name,
             id,
-            league,
         }
-    }
-
-    /// Getter for league of Team.
-    pub fn get_league(&self) -> &Option<&'a League> {
-        &self.league
     }
 }
 
-impl<'a> ItemResult for Team<'a> {
+impl ItemResult for Team {
     /// Getter for name of Team.
     fn get_name(&self) -> &String {
         &self.name
