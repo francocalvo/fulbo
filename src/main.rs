@@ -1,7 +1,9 @@
 #![doc = include_str!("../README.md")]
 
+use fulbo;
+
 fn main() {
-    println!("Hello, world!");
+    fulbo::run();
 }
 
 // use error_chain::error_chain;

@@ -8,7 +8,7 @@ use crate::domain;
 pub trait Datasource {
     /// This function returns a vector of ItemResult structs with the
     /// leagues from the data source.
-    fn get_leagues() -> Vec<domain::League>;
+    fn get_leagues<'a>() -> Vec<domain::League<'a>>;
 
     /// This function returns a vector of ItemResult structs with the
     /// teams from the data source.
@@ -16,5 +16,5 @@ pub trait Datasource {
     fn get_teams(league: &domain::League) -> Vec<domain::Team>;
 
     /// This function returns a team with information from the data source.
-    fn get_team<'a>(team_id: i32) -> domain::Team<'a>;
+    fn get_team(team_id: i32) -> domain::Team;
 }

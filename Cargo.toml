@@ -53,3 +53,7 @@ workspace = true
 reqwest = { version = "0.11.6", features = ["blocking", "json"] }
 error-chain = "0.12.4"
 tokio = { version = "1.15.0", features = ["full"] }
+clap = { version = "4.4.11", features = ["derive"] }
+toml = "0.8.8"
+serde = { version = "1.0.193", features = ["derive"] }
+dirs = "5.0.1"
